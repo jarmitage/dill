@@ -116,6 +116,11 @@ def findsource(object):
     try: file = getfile(module)
     except TypeError: file = None
     is_module_main = (module and module.__name__ == '__main__' and not file)
+
+    # Hotfix for asyncio REPLs
+    if module.__package__ == 'asyncio':
+        file = None
+
     if IS_IPYTHON and is_module_main:
         #FIXME: quick fix for functions and classes in IPython interpreter
         try:
@@ -202,7 +207,10 @@ def findsource(object):
     if iscode(object):
         if not hasattr(object, 'co_firstlineno'):
             raise IOError('could not find function definition')
-        stdin = object.co_filename == '<stdin>'
+                
+        # Hotfix for asyncio REPLs
+        stdin = object.co_filename in ('<console>', '<stdin>')
+        
         if stdin:
             lnum = len(lines) - 1 # can't get lnum easily, so leverage pat
             if not pat1: pat1 = r'^(\s*def\s)|(.*(?<!\w)lambda(:|\s))|^(\s*@)'
